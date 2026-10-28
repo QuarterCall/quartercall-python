@@ -15,12 +15,20 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Office/Business :: Financial",
     "Typing :: Typed",
 ]
 
 [project.urls]
 Homepage = "https://quartercall.com/"
+# GitHub links to this repository show as verified on PyPI: releases come from it by trusted publishing.
+Source = "https://github.com/QuarterCall/quartercall-python"
+Issues = "https://github.com/QuarterCall/quartercall-python/issues"
+Changelog = "https://github.com/QuarterCall/quartercall-python/blob/main/CHANGELOG.md"
 
 [dependency-groups]
 dev = ["pytest>=8"]
@@ -34,7 +42,7 @@ packages = ["src/quartercall"]
 
 # Hatch does not read .spikes/.gitignore, so the sdist names what it carries.
 [tool.hatch.build.targets.sdist]
-include = ["/src/quartercall", "/tests", "/README.md", "/LICENSE"]
+include = ["/src/quartercall", "/tests", "/README.md", "/CHANGELOG.md", "/LICENSE"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
