@@ -1,6 +1,8 @@
+from datetime import date
 import urllib.error
 
 import pandas as pd
+import pyarrow as pa
 import pytest
 
 import quartercall
@@ -56,11 +58,14 @@ def test_types_dates_counts_and_times(site):
 
     frame = quarters(base_url=base)
 
-    assert frame["cycle_date"].tolist() == [pd.Timestamp("2026-09-30"), pd.Timestamp("2026-06-30")]
-    assert frame["cu_count"].dtype == "Int64"
+    # Arrow-backed, like the readers' frames, so the two merge on quarter and cycle_date.
+    assert frame["quarter"].dtype == pd.ArrowDtype(pa.string())
+    assert frame["cycle_date"].dtype == pd.ArrowDtype(pa.date32())
+    assert frame["cycle_date"].tolist() == [date(2026, 9, 30), date(2026, 6, 30)]
+    assert frame["cu_count"].dtype == pd.ArrowDtype(pa.int64())
     assert frame["cu_count"].iloc[0] == 1816 and frame["cu_count"].isna().iloc[1]
+    assert frame["updated_at"].dtype == pd.ArrowDtype(pa.timestamp("us", tz="UTC"))
     assert frame["updated_at"].iloc[0] == pd.Timestamp("2026-10-27T10:34:44Z")
-    assert str(frame["updated_at"].dt.tz) == "UTC"
     assert pd.isna(frame["updated_at"].iloc[1])
 
 

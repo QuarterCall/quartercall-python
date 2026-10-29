@@ -3,17 +3,26 @@
 The rules are the data contract's (CONTRACT.md for data.quartercall.com), §2 and §6.
 """
 
+from datetime import date, datetime
 import json
 import urllib.request
 
 import pandas as pd
+import pyarrow as pa
 
 from quartercall._version import __version__
 
 BASE_URL = "https://data.quartercall.com/"
 SUPPORTED_MAJOR = "1"
 STATUSES = {"open", "dormant"}
-COLUMNS = ["quarter", "cycle_date", "status", "cu_count", "updated_at"]
+# Arrow-backed like the readers' frames, so the two merge on quarter and cycle_date.
+SCHEMA = pa.schema([
+    ("quarter", pa.string()),
+    ("cycle_date", pa.date32()),
+    ("status", pa.string()),
+    ("cu_count", pa.int64()),
+    ("updated_at", pa.timestamp("us", tz="UTC")),
+])
 
 
 class UnsupportedSchemaError(RuntimeError):
@@ -46,24 +55,26 @@ def quarters(*, base_url: str = BASE_URL, timeout: float = 30) -> pd.DataFrame:
     a ``dormant`` quarter becomes ``open`` again when an amendment arrives.
 
     Raises ``UnsupportedSchemaError`` if the data has moved to a schema this version cannot
-    read, and ``urllib.error.URLError`` if the manifest cannot be fetched.
+    read, and ``OSError`` if the manifest cannot be fetched: ``urllib.error.URLError``, or
+    ``TimeoutError`` for a stalled response.
     """
     manifest = _fetch_manifest(base_url, timeout)
     rows = [
         {
             "quarter": q["quarter"],
-            "cycle_date": q.get("cycle_date"),
+            "cycle_date": _parsed(date, q.get("cycle_date")),
             # A status this package does not recognise is to be read as open (§2).
             "status": q.get("status") if q.get("status") in STATUSES else "open",
             "cu_count": q.get("cu_count"),
-            "updated_at": q.get("updated_at"),
+            "updated_at": _parsed(datetime, q.get("updated_at")),
         }
         for q in manifest.get("quarters", [])
         # A quarter is listed once held; its accounts file is what makes it readable (§2).
         if "accounts_path" in q
     ]
-    frame = pd.DataFrame(rows, columns=COLUMNS)
-    frame["cycle_date"] = pd.to_datetime(frame["cycle_date"])
-    frame["cu_count"] = frame["cu_count"].astype("Int64")
-    frame["updated_at"] = pd.to_datetime(frame["updated_at"], utc=True)
-    return frame.sort_values("quarter", ascending=False, ignore_index=True)
+    table = pa.Table.from_pylist(rows, schema=SCHEMA).sort_by([("quarter", "descending")])
+    return table.to_pandas(types_mapper=pd.ArrowDtype)
+
+
+def _parsed(kind, value):
+    return None if value is None else kind.fromisoformat(value)
