@@ -22,6 +22,6 @@ jobs:
           persist-credentials: false
       - uses: astral-sh/setup-uv@v7
       - run: uv run --python ${{ matrix.python }} pytest -q
-      # The oldest pandas the package claims to support.
+      # The oldest pandas and PyArrow the package claims to support.
       - if: matrix.python == '3.11'
         run: uv run --isolated --python 3.11 --resolution lowest-direct pytest -q
