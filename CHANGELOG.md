@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.0.2 — 2026-10-29
 
 - `accounts()`, `profiles()` and `accounts_text()`: read one quarter into pandas, with account-code
   and credit-union filters and column selection. Arrow-backed types preserve nullable identifiers
