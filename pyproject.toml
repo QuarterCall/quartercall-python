@@ -1,6 +1,6 @@
 [project]
 name = "quartercall"
-version = "0.0.1"
+version = "0.0.2"
 description = "Read QuarterCall Data, the NCUA Form 5300 Call Reports republished at data.quartercall.com, into pandas"
 readme = "README.md"
 license = "Apache-2.0"
